@@ -48,10 +48,44 @@ class ShowArticle(Resource):
 
         return {'message': 'Maximum pageview limit reached'}, 401
 
+class Login(Resource):
+    
+    def post(self):
+        # gets a username from request's JSON & retrieves user by username
+        user = User.query.filter(User.username == request.get_json()['username']).first()
+        # assuming I have session
+        # sets the session's user_id value to the user's id.
+        session['user_id'] = user.id
+        # returns the user as JSON with a 200 status code.
+        return make_response(jsonify(user.to_dict()),200,)
+
+class Logout(Resource):
+    
+    def delete(self):
+        # removes the user_id value from the session.
+        # session.pop('user_id',None)
+        session['user_id'] = None
+        return make_response('',204,)
+
+class CheckSession(Resource):
+    
+    def get(self):
+        # retrieves user_id value from session
+        user = User.query.filter(User.id == session.get('user_id')).first()
+        # returns the user as JSON with a 200 status code.
+        if user: 
+            return make_response(jsonify(user.to_dict()), 200)
+        # returns no data and a 401 (Unauthorized) status code.
+        else:
+            return make_response({}, 401)
+
+
 api.add_resource(ClearSession, '/clear')
 api.add_resource(IndexArticle, '/articles')
 api.add_resource(ShowArticle, '/articles/<int:id>')
-
+api.add_resource(Login, '/login')
+api.add_resource(Logout, '/logout')
+api.add_resource(CheckSession, '/check_session')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
